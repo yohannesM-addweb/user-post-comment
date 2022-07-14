@@ -2,6 +2,7 @@ const {gql} = require('apollo-server-express')
 
 const typeDefs = gql`
 
+    scalar Upload
     type User {
         _id: ID!
         name: String!
@@ -14,9 +15,15 @@ const typeDefs = gql`
         _id: ID!
         title: String!
         body: String!
-        image: String
+        images: [Image!]!
         user: User!
         comments: [Comment!]!
+    }
+
+    type Image {
+        _id: ID!
+        image: String!
+        post: Post!
     }
 
     type Comment {
@@ -25,13 +32,16 @@ const typeDefs = gql`
         post: Post!
         user: User!
       }
+    type SuccessMessage {
+        message: String
+    }
 
 
 
     type Mutation {
         createUser(name: String!, email: String!): User!
+        uploadImage(file: Upload!, post: String!): Image!
         createPost(title: String!, body: String!, user: String!): Post!
-        uploadImage(image: GraphQLUpload!): Boolean
         createComment(text: String!, post: String!, user: String!): Comment!
         
     }
@@ -40,6 +50,7 @@ const typeDefs = gql`
         getUsers: [User!]!
         getPosts: [Post!]!
         getComments: [Comment!]!
+        getImages: [Image!]!
       }
 `;
 

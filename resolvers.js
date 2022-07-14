@@ -1,20 +1,13 @@
+const GraphQLUpload = require("graphql-upload/GraphQLUpload.js");
 const Post = require('./models/Post.model');
 const Comment = require('./models/Comment.model')
 const User = require('./models/User.model')
 const mongoose = require('mongoose');
-const GraphQLUpload = require('graphql-upload');
+const { readImageFile } = require("./middlewares/images");
+const Image = require("./models/Image.model");
 
 const resolvers = {
     Query: {
-        
-        // posts: async () => {
-        //     return await Post.find();
-        // },
-
-        // getPost: async (_parent, args, _context, _info) => {
-        //     return await Post.findById(args.id);
-        // }
-
         async getUsers() {
         const users = await User.find({});
     
@@ -31,93 +24,70 @@ const resolvers = {
         const comments = await Comment.find({});
     
         return comments;
-        }
+        },
+
+        async getImages() {
+          const images = await Image.find({});
+      
+          return images;
+          }
+
+        
 
     },
     Mutation: {
 
         async createUser(_, { name, email }) {
-        const newUser = new User({ name, email });
-        const createdUser = await newUser.save();
-    
-        return createdUser;
+          const newUser = new User({ name, email });
+          const createdUser = await newUser.save();
+      
+          return createdUser;
         },
     
         async createPost(_, { title, body, user: userId }) {
-        const newPost = new Post({ title, body, user: userId });
-        const createdPost = await newPost.save();
-        const user = await User.findById(mongoose.Types.ObjectId(userId));
-        user.posts.push(createdPost._id);
-        await user.save();
+          const newPost = new Post({ title, body, user: userId });
+          const createdPost = await newPost.save();
+          const user = await User.findById(mongoose.Types.ObjectId(userId));
+          user.posts.push(createdPost._id);
+          await user.save();
+      
+          return createdPost;
+        },
+
+        async uploadImage(_, {file, post: postId,}){
+          const imageUrl = await readImageFile(file); 
+
+          const image = new Image({
+            image: imageUrl,
+            post: postId
+          });
+
+          const createdImage = await image.save();
+          const post = await Post.findById(mongoose.Types.ObjectId(postId));
+          post.images.push(createdImage._id);
+          await post.save();
+
+          return createdImage;
+        },
+
     
-        return createdPost;
-        },
-
-        
-
-        async uploadImage() {
-            return "Ok"
-        },
 
     
         async createComment(_, { text, post: postId, user: userId }) {
-        const newComment = new Comment({ text, post: postId, user: userId });
-        const createdComment = await newComment.save();
-        const user = await User.findById(mongoose.Types.ObjectId(userId));
-        const post = await Post.findById(mongoose.Types.ObjectId(postId));
-        user.comments.push(createdComment._id);
-        post.comments.push(createdComment._id);
-        await user.save();
-        await post.save();
-    
-        return createdComment;
+          const newComment = new Comment({ text, post: postId, user: userId });
+          const createdComment = await newComment.save();
+          const user = await User.findById(mongoose.Types.ObjectId(userId));
+          const post = await Post.findById(mongoose.Types.ObjectId(postId));
+          user.comments.push(createdComment._id);
+          post.comments.push(createdComment._id);
+          await user.save();
+          await post.save();
+      
+          return createdComment;
         }
-
-        // addComment: async (parent, args, context, info) => {
-        //     const {author, text} = args.comment;
-        //     const comment = new Comment({author, text});
-
-        //     await comment.save();
-        //     return comment;
-        // },
-        // createPost: async (parent, args, context, info) => {
-        //     const {title, description} = args.post;
-        //     const post = new Post({title, description});
-
-        //     await post.save();
-        //     return post;
-        // },
-        // deletePost: async (parent, args, context, info) => {
-        //     const {id} = args;
-
-        //     await Post.findByIdAndDelete(id);
-        //     return "Ok, post is deleted.";
-        // },
-        // updatePost:  async (parent, args, context, info) => {
-        //     const {id} = args;
-        //     const {title, description} = args.post;
-
-        //     const updates = {};
-
-        //     if(title !== undefined) {
-        //         updates.title = title
-        //     }
-
-        //     if(description !== undefined) {
-        //         updates.description = description
-        //     }
-            
-        //     const post = await Post.findByIdAndUpdate(id, 
-        //         updates, 
-        //         {new: true}
-        //         );
-
-        //     console.log(title)
-
-        //     return post;
-
-        // }
     },
+
+    Upload: GraphQLUpload,
 
     User: {
         async posts(parent) {
@@ -130,6 +100,11 @@ const resolvers = {
       },
     
       Post: {
+
+        async images (parent) {
+          return await Image.find({post: parent._id});
+        },
+
         async user(parent) {
           return await User.findById(parent.user);
         },
@@ -147,7 +122,14 @@ const resolvers = {
         async user(parent) {
           return await User.findById(parent.user);
         }
+      },
+
+      Image: {
+        async post(parent) {
+          return await Post.findById(parent.post);
+        },
       }
+
 };
 
 module.exports = resolvers;

@@ -1,7 +1,7 @@
 const express = require('express');
 const {ApolloServer, gql} = require('apollo-server-express');
-const mongoose = require('mongoose')
-
+const mongoose = require('mongoose');
+const graphqlUploadExpress = require("graphql-upload/graphqlUploadExpress.js");
 const typeDefs = require('./typeDefs')
 const resolvers = require('./resolvers')
 
@@ -10,6 +10,7 @@ const resolvers = require('./resolvers')
 
 async function startServer() {
     const app = express();
+    
     const apolloServer = new ApolloServer({
         typeDefs,
         resolvers
@@ -17,13 +18,15 @@ async function startServer() {
 
     await apolloServer.start();
 
+    app.use(graphqlUploadExpress({ maxFileSize: 10000000, maxFiles: 10 }));
+
     apolloServer.applyMiddleware({ app: app});
 
     app.use((request, response) => {
         response.send('Hello from express apollo server.')
     })
 
-    await mongoose.connect('mongodb://localhost:27017/user_post_comment_db', {
+    await mongoose.connect('mongodb://localhost:27017/db_graphql_demo_4', {
         useUnifiedTopology: true,
         useNewUrlParser: true,
     })
