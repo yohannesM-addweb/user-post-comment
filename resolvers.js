@@ -6,6 +6,7 @@ const mongoose = require('mongoose');
 const { readImageFile } = require("./middlewares/images");
 const Image = require("./models/Image.model");
 
+
 const resolvers = {
     Query: {
         async getUsers() {
@@ -30,8 +31,30 @@ const resolvers = {
           const images = await Image.find({});
       
           return images;
-          }
+        },
 
+        async getPostsByTitle(parent, args, context, info) {
+          const { title } = args;
+          const posts = await Post.find({});
+
+          return posts.filter(post => post.title == title);
+        },
+
+        // getCommentsByPostId(post: String!): [Comment!]!
+        // getPostImagesByPostId(post: String!): [Image!]!
+        async getCommentsByPostId (parent, args, context, info) {
+          const postId = args.post;
+          const comments = await Comment.find({});
+
+          return comments.filter(comment => comment.post._id == postId);
+        },
+
+        async getPostImagesByPostId (parent, args, context, info) {
+          const postId = args.post;
+          const images = await Image.find({});
+
+          return images.filter(image => image.post._id == postId);
+        }
         
 
     },

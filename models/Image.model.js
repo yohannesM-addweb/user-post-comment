@@ -12,7 +12,7 @@ const ImageSchema= new mongoose.Schema({
         ref: "post"
       },
 
-});
+}, {timestamps: true});
 
 const Image = mongoose.model('image', ImageSchema);
 

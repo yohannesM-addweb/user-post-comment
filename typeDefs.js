@@ -51,6 +51,10 @@ const typeDefs = gql`
         getPosts: [Post!]!
         getComments: [Comment!]!
         getImages: [Image!]!
+
+        getPostsByTitle(title: String!): [Post!]!
+        getCommentsByPostId(post: String!): [Comment!]!
+        getPostImagesByPostId(post: String!): [Image!]!
       }
 `;
 
